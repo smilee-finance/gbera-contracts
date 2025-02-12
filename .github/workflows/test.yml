@@ -1,0 +1,42 @@
+name: test
+
+on:
+  pull_request:
+
+env:
+  FOUNDRY_PROFILE: ci
+  RPC_URL: https://bartio.rpc.berachain.com
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - job_name: lint
+            command: npm run lint
+            summary: "## Lint result"
+          - job_name: test
+            command: |
+                forge --version
+                forge test -vv
+            summary: "## Test result"
+    name: ${{ matrix.job_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install the Node.js dependencies
+        run: npm install
+
+      - name: Execute Job Command
+        run: ${{ matrix.command }}
+
+      - name: Add Job Summary
+        run: |
+          echo ${{ matrix.summary }} >> $GITHUB_STEP_SUMMARY
+          echo "✅ Passed" >> $GITHUB_STEP_SUMMARY
